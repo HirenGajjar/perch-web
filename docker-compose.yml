@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: perch_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: perch
+      POSTGRES_PASSWORD: perch
+      POSTGRES_DB: perchdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - perch_postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: perch_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - perch_redis_data:/data
+
+volumes:
+  perch_postgres_data:
+  perch_redis_data:
