@@ -1,0 +1,139 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String?
+  name          String?
+  avatarUrl     String?
+  isVerified    Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  subscriptions Subscription[]
+  bookmarks     Bookmark[]
+  readStates    ReadState[]
+  highlights    Highlight[]
+  groups        Group[]
+  oauthAccounts OAuthAccount[]
+}
+
+model OAuthAccount {
+  id         String   @id @default(cuid())
+  userId     String
+  provider   String
+  providerId String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+}
+
+model Feed {
+  id            String         @id @default(cuid())
+  url           String         @unique
+  title         String
+  description   String?
+  siteUrl       String?
+  faviconUrl    String?
+  isHealthy     Boolean        @default(true)
+  lastFetchedAt DateTime?
+  createdAt     DateTime       @default(now())
+  subscriptions Subscription[]
+  articles      Article[]
+}
+
+model Subscription {
+  id          String              @id @default(cuid())
+  userId      String
+  feedId      String
+  customTitle String?
+  createdAt   DateTime            @default(now())
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feed        Feed                @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  groups      GroupSubscription[]
+
+  @@unique([userId, feedId])
+}
+
+model Group {
+  id            String              @id @default(cuid())
+  userId        String
+  name          String
+  createdAt     DateTime            @default(now())
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptions GroupSubscription[]
+
+  @@unique([userId, name])
+}
+
+model GroupSubscription {
+  id             String       @id @default(cuid())
+  groupId        String
+  subscriptionId String
+  group          Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, subscriptionId])
+}
+
+model Article {
+  id           String      @id @default(cuid())
+  feedId       String
+  url          String      @unique
+  title        String
+  cleanContent String?     @db.Text
+  excerpt      String?
+  author       String?
+  imageUrl     String?
+  readingTime  Int?
+  publishedAt  DateTime?
+  createdAt    DateTime    @default(now())
+  feed         Feed        @relation(fields: [feedId], references: [id], onDelete: Cascade)
+  bookmarks    Bookmark[]
+  readStates   ReadState[]
+  highlights   Highlight[]
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  articleId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+}
+
+model ReadState {
+  id           String   @id @default(cuid())
+  userId       String
+  articleId    String
+  readAt       DateTime @default(now())
+  scrollOffset Int      @default(0)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article      Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, articleId])
+}
+
+model Highlight {
+  id          String   @id @default(cuid())
+  userId      String
+  articleId   String
+  text        String   @db.Text
+  startOffset Int
+  endOffset   Int
+  color       String   @default("yellow")
+  note        String?  @db.Text
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  article     Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+}
