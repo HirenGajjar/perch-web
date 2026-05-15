@@ -4,3 +4,5 @@ node_modules
 dist
 build
 .DS_Store
+apps/api/CP-Templates
+apps/api/LaPis
