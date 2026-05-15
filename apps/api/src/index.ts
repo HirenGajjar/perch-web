@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
+import authRoutes from './routes/auth.routes.ts'
 
 dotenv.config()
 
@@ -15,6 +16,8 @@ app.use(express.json())
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
+
+app.use('/auth', authRoutes)
 
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`)
