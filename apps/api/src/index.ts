@@ -3,6 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import dotenv from 'dotenv'
 import authRoutes from './routes/auth.routes.ts'
+import feedRoutes from './routes/feed.routes.ts'
 
 dotenv.config()
 
@@ -18,6 +19,7 @@ app.get('/health', (_req, res) => {
 })
 
 app.use('/auth', authRoutes)
+app.use('/feeds', feedRoutes)
 
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`)
