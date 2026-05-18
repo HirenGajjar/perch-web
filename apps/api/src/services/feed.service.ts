@@ -17,6 +17,14 @@ function stripHtml(html: string): string {
     .trim()
 }
 
+function makeImagesAbsolute(html: string, baseUrl: string): string {
+  if (!baseUrl) return html
+  const base = new URL(baseUrl)
+  return html
+    .replace(/src="\/([^"]+)"/g, `src="${base.origin}/$1"`)
+    .replace(/src='\/([^']+)'/g, `src='${base.origin}/$1'`)
+}
+
 export async function addFeed(url: string, userId: string) {
   let feed
 
@@ -67,7 +75,7 @@ export async function addFeed(url: string, userId: string) {
             feedId: dbFeed.id,
             url: item.link,
             title: item.title ?? 'Untitled',
-            cleanContent: rawContent,
+            cleanContent: makeImagesAbsolute(rawContent, feed.link ?? ''),
             excerpt: plainText.slice(0, 300),
             author: item.creator ?? null,
             imageUrl: item.enclosure?.url ?? null,
