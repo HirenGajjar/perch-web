@@ -1,11 +1,11 @@
-import RSSParser from 'rss-parser'
-import { prisma } from '../lib/prisma.ts'
+import RSSParser from 'rss-parser';
+import { prisma } from '../lib/prisma.ts';
 
-const parser = new RSSParser()
+const parser = new RSSParser();
 
 function estimateReadingTime(text: string): number {
-  const words = text.trim().split(/\s+/).length
-  return Math.ceil(words / 200)
+  const words = text.trim().split(/\s+/).length;
+  return Math.ceil(words / 200);
 }
 
 function stripHtml(html: string): string {
@@ -14,59 +14,61 @@ function stripHtml(html: string): string {
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<[^>]*>/g, ' ')
     .replace(/\s+/g, ' ')
-    .trim()
+    .trim();
 }
 
 function makeImagesAbsolute(html: string, baseUrl: string): string {
-  if (!baseUrl) return html
-  const base = new URL(baseUrl)
+  if (!baseUrl) return html;
+  const base = new URL(baseUrl);
   return html
     .replace(/src="\/([^"]+)"/g, `src="${base.origin}/$1"`)
-    .replace(/src='\/([^']+)'/g, `src='${base.origin}/$1'`)
+    .replace(/src='\/([^']+)'/g, `src='${base.origin}/$1'`);
 }
 
 export async function addFeed(url: string, userId: string) {
-  let feed
+  let feed;
 
   try {
-    feed = await parser.parseURL(url)
+    feed = await parser.parseURL(url);
   } catch {
-    throw new Error('Could not fetch or parse the RSS feed at that URL')
+    throw new Error('Could not fetch or parse the RSS feed at that URL');
   }
 
-  const existing = await prisma.feed.findUnique({ where: { url } })
+  const existing = await prisma.feed.findUnique({ where: { url } });
 
-  const dbFeed = existing ?? await prisma.feed.create({
-    data: {
-      url,
-      title: feed.title ?? 'Untitled Feed',
-      description: feed.description ?? null,
-      siteUrl: feed.link ?? null,
-      faviconUrl: feed.image?.url ?? null,
-    }
-  })
+  const dbFeed =
+    existing ??
+    (await prisma.feed.create({
+      data: {
+        url,
+        title: feed.title ?? 'Untitled Feed',
+        description: feed.description ?? null,
+        siteUrl: feed.link ?? null,
+        faviconUrl: feed.image?.url ?? null,
+      },
+    }));
 
   const alreadySubscribed = await prisma.subscription.findUnique({
-    where: { userId_feedId: { userId, feedId: dbFeed.id } }
-  })
+    where: { userId_feedId: { userId, feedId: dbFeed.id } },
+  });
 
   if (alreadySubscribed) {
-    throw new Error('You are already subscribed to this feed')
+    throw new Error('You are already subscribed to this feed');
   }
 
   await prisma.subscription.create({
-    data: { userId, feedId: dbFeed.id }
-  })
+    data: { userId, feedId: dbFeed.id },
+  });
 
   if (!existing) {
-    const articles = (feed.items ?? []).slice(0, 20)
+    const articles = (feed.items ?? []).slice(0, 20);
 
     await Promise.allSettled(
-      articles.map(item => {
-        if (!item.link) return Promise.resolve()
+      articles.map((item) => {
+        if (!item.link) return Promise.resolve();
 
-        const rawContent = item['content:encoded'] ?? item.content ?? item.summary ?? ''
-        const plainText = stripHtml(rawContent)
+        const rawContent = item['content:encoded'] ?? item.content ?? item.summary ?? '';
+        const plainText = stripHtml(rawContent);
 
         return prisma.article.upsert({
           where: { url: item.link },
@@ -81,13 +83,13 @@ export async function addFeed(url: string, userId: string) {
             imageUrl: item.enclosure?.url ?? null,
             readingTime: estimateReadingTime(plainText),
             publishedAt: item.pubDate ? new Date(item.pubDate) : null,
-          }
-        })
+          },
+        });
       })
-    )
+    );
   }
 
-  return dbFeed
+  return dbFeed;
 }
 
 export async function getUserFeeds(userId: string) {
@@ -96,22 +98,22 @@ export async function getUserFeeds(userId: string) {
     include: {
       feed: {
         include: {
-          _count: { select: { articles: true } }
-        }
-      }
+          _count: { select: { articles: true } },
+        },
+      },
     },
-    orderBy: { createdAt: 'desc' }
-  })
+    orderBy: { createdAt: 'desc' },
+  });
 }
 
 export async function unsubscribeFeed(feedId: string, userId: string) {
   const sub = await prisma.subscription.findUnique({
-    where: { userId_feedId: { userId, feedId } }
-  })
+    where: { userId_feedId: { userId, feedId } },
+  });
 
-  if (!sub) throw new Error('Subscription not found')
+  if (!sub) throw new Error('Subscription not found');
 
   await prisma.subscription.delete({
-    where: { userId_feedId: { userId, feedId } }
-  })
+    where: { userId_feedId: { userId, feedId } },
+  });
 }

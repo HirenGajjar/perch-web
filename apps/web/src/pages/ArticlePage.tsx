@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api.ts'
+import { usePageTitle } from '../hooks/usePageTitle.ts'
 
 export default function ArticlePage() {
   const { id } = useParams()
@@ -14,22 +15,22 @@ export default function ArticlePage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['article', id],
-    queryFn: () => api.get(`/articles/${id}`).then(r => r.data.article)
+    queryFn: () => api.get(`/articles/${id}`).then((r) => r.data.article),
   })
 
+  usePageTitle(data?.title ?? '')
+
   const bookmark = useMutation({
-    mutationFn: () => data?.isBookmarked
-      ? api.delete(`/bookmarks/${id}`)
-      : api.post(`/bookmarks/${id}`),
+    mutationFn: () =>
+      data?.isBookmarked ? api.delete(`/bookmarks/${id}`) : api.post(`/bookmarks/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['article', id] })
       queryClient.invalidateQueries({ queryKey: ['articles'] })
-    }
+    },
   })
 
   const saveScroll = useMutation({
-    mutationFn: (scrollOffset: number) =>
-      api.patch(`/articles/${id}/scroll`, { scrollOffset })
+    mutationFn: (scrollOffset: number) => api.patch(`/articles/${id}/scroll`, { scrollOffset }),
   })
 
   useEffect(() => {
@@ -51,7 +52,10 @@ export default function ArticlePage() {
     let last = 0
     return (...args: any[]) => {
       const now = Date.now()
-      if (now - last >= delay) { last = now; fn(...args) }
+      if (now - last >= delay) {
+        last = now
+        fn(...args)
+      }
     }
   }
 
@@ -82,35 +86,51 @@ export default function ArticlePage() {
     isSpeaking ? stopSpeech() : startSpeech()
   }
 
-  if (isLoading) return (
-    <div style={{
-      minHeight: '100vh', background: 'var(--bg-primary)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center'
-    }}>
-      <p style={{ color: 'var(--text-muted)' }}>Loading...</p>
-    </div>
-  )
+  if (isLoading)
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          background: 'var(--bg-primary)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <p style={{ color: 'var(--text-muted)' }}>Loading...</p>
+      </div>
+    )
 
   if (!data) return null
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
-
       {/* Top bar */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 10,
-        background: 'rgba(10,10,10,0.95)',
-        backdropFilter: 'blur(8px)',
-        borderBottom: '1px solid var(--border)',
-        padding: '0.75rem 1.5rem',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between'
-      }}>
+      <div
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          background: 'rgba(10,10,10,0.95)',
+          backdropFilter: 'blur(8px)',
+          borderBottom: '1px solid var(--border)',
+          padding: '0.75rem 1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <button
           onClick={() => navigate('/')}
           style={{
-            background: 'transparent', border: 'none',
-            color: 'var(--text-secondary)', cursor: 'pointer',
-            fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.4rem'
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            fontSize: '0.875rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
           }}
         >
           ← Back
@@ -121,14 +141,21 @@ export default function ArticlePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <select
               value={speechRate}
-              onChange={e => {
+              onChange={(e) => {
                 setSpeechRate(Number(e.target.value))
-                if (isSpeaking) { stopSpeech(); setTimeout(startSpeech, 100) }
+                if (isSpeaking) {
+                  stopSpeech()
+                  setTimeout(startSpeech, 100)
+                }
               }}
               style={{
-                background: 'var(--bg-tertiary)', border: '1px solid var(--border)',
-                color: 'var(--text-secondary)', borderRadius: '6px',
-                padding: '0.3rem 0.5rem', fontSize: '0.8rem', cursor: 'pointer'
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-secondary)',
+                borderRadius: '6px',
+                padding: '0.3rem 0.5rem',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
               }}
             >
               <option value={0.75}>0.75x</option>
@@ -144,8 +171,10 @@ export default function ArticlePage() {
                 padding: '0.35rem 0.85rem',
                 background: isSpeaking ? 'var(--bg-tertiary)' : 'transparent',
                 border: '1px solid var(--border)',
-                borderRadius: '6px', color: 'var(--text-secondary)',
-                cursor: 'pointer', fontSize: '0.8rem'
+                borderRadius: '6px',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
               }}
             >
               {isSpeaking ? '⏹ Stop' : '▶ Listen'}
@@ -161,7 +190,8 @@ export default function ArticlePage() {
               border: `1px solid ${data.isBookmarked ? 'var(--accent)' : 'var(--border)'}`,
               borderRadius: '6px',
               color: data.isBookmarked ? 'white' : 'var(--text-secondary)',
-              cursor: 'pointer', fontSize: '0.8rem'
+              cursor: 'pointer',
+              fontSize: '0.8rem',
             }}
           >
             {data.isBookmarked ? '★ Saved' : '☆ Save'}
@@ -175,8 +205,10 @@ export default function ArticlePage() {
             style={{
               padding: '0.35rem 0.85rem',
               border: '1px solid var(--border)',
-              borderRadius: '6px', color: 'var(--text-secondary)',
-              textDecoration: 'none', fontSize: '0.8rem'
+              borderRadius: '6px',
+              color: 'var(--text-secondary)',
+              textDecoration: 'none',
+              fontSize: '0.8rem',
             }}
           >
             Original
@@ -186,39 +218,59 @@ export default function ArticlePage() {
 
       {/* Article content */}
       <div style={{ maxWidth: '680px', margin: '0 auto', padding: '3rem 1.5rem 6rem' }}>
-
         {/* Meta */}
         <div style={{ marginBottom: '2rem' }}>
-          <p style={{
-            fontSize: '0.8rem', color: 'var(--accent)',
-            marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em'
-          }}>
+          <p
+            style={{
+              fontSize: '0.8rem',
+              color: 'var(--accent)',
+              marginBottom: '0.75rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
             {data.feed?.title}
           </p>
 
-          <h1 style={{
-            fontSize: '2rem', fontWeight: '700', lineHeight: '1.25',
-            color: 'var(--text-primary)', marginBottom: '1rem',
-            letterSpacing: '-0.02em'
-          }}>
+          <h1
+            style={{
+              fontSize: '2rem',
+              fontWeight: '700',
+              lineHeight: '1.25',
+              color: 'var(--text-primary)',
+              marginBottom: '1rem',
+              letterSpacing: '-0.02em',
+            }}
+          >
             {data.title}
           </h1>
 
-          <div style={{
-            display: 'flex', gap: '1rem', fontSize: '0.8rem',
-            color: 'var(--text-muted)', flexWrap: 'wrap'
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '1rem',
+              fontSize: '0.8rem',
+              color: 'var(--text-muted)',
+              flexWrap: 'wrap',
+            }}
+          >
             {data.author && <span>By {data.author}</span>}
             {data.publishedAt && (
-              <span>{new Date(data.publishedAt).toLocaleDateString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric'
-              })}</span>
+              <span>
+                {new Date(data.publishedAt).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </span>
             )}
             {data.readingTime && <span>{data.readingTime} min read</span>}
           </div>
         </div>
 
-        <hr style={{ border: 'none', borderTop: '1px solid var(--border)', marginBottom: '2.5rem' }} />
+        <hr
+          style={{ border: 'none', borderTop: '1px solid var(--border)', marginBottom: '2.5rem' }}
+        />
 
         {/* Body */}
         <div
