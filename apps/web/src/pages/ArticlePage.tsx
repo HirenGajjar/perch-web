@@ -1,120 +1,114 @@
-import { useEffect, useRef, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { api } from '../lib/api.ts'
-import { usePageTitle } from '../hooks/usePageTitle.ts'
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../lib/api.ts';
+import { usePageTitle } from '../hooks/usePageTitle.ts';
 
 export default function ArticlePage() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [speechRate, setSpeechRate] = useState(1)
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechRate, setSpeechRate] = useState(1);
 
   const { data, isLoading } = useQuery({
     queryKey: ['article', id],
     queryFn: () => api.get(`/articles/${id}`).then((r) => r.data.article),
-  })
+  });
 
-  usePageTitle(data?.title ?? '')
+  usePageTitle(data?.title ?? '');
 
   const bookmark = useMutation({
     mutationFn: () =>
       data?.isBookmarked ? api.delete(`/bookmarks/${id}`) : api.post(`/bookmarks/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['article', id] })
-      queryClient.invalidateQueries({ queryKey: ['articles'] })
+      queryClient.invalidateQueries({ queryKey: ['article', id] });
+      queryClient.invalidateQueries({ queryKey: ['articles'] });
     },
-  })
+  });
 
   const saveScroll = useMutation({
     mutationFn: (scrollOffset: number) => api.patch(`/articles/${id}/scroll`, { scrollOffset }),
-  })
+  });
 
   useEffect(() => {
-    if (data?.scrollOffset && contentRef.current) {
-      window.scrollTo(0, data.scrollOffset)
+    if (data?.scrollOffset) {
+      window.scrollTo(0, data.scrollOffset);
     }
-  }, [data])
+  }, [data]);
 
   useEffect(() => {
+    let last = 0;
     const handleScroll = () => {
-      saveScroll.mutate(window.scrollY)
-    }
-    const throttled = throttle(handleScroll, 2000)
-    window.addEventListener('scroll', throttled)
-    return () => window.removeEventListener('scroll', throttled)
-  }, [id])
-
-  function throttle(fn: Function, delay: number) {
-    let last = 0
-    return (...args: any[]) => {
-      const now = Date.now()
-      if (now - last >= delay) {
-        last = now
-        fn(...args)
+      const now = Date.now();
+      if (now - last >= 2000) {
+        last = now;
+        saveScroll.mutate(window.scrollY);
       }
-    }
-  }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [id]);
 
   function getPlainText(): string {
-    if (!contentRef.current) return ''
-    return contentRef.current.innerText ?? ''
+    return contentRef.current?.innerText ?? '';
   }
 
   function startSpeech() {
-    window.speechSynthesis.cancel()
-    const text = getPlainText()
-    if (!text) return
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = speechRate
-    utterance.onend = () => setIsSpeaking(false)
-    utterance.onerror = () => setIsSpeaking(false)
-    utteranceRef.current = utterance
-    window.speechSynthesis.speak(utterance)
-    setIsSpeaking(true)
+    window.speechSynthesis.cancel();
+    const text = getPlainText();
+    if (!text) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechRate;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+    setIsSpeaking(true);
   }
 
   function stopSpeech() {
-    window.speechSynthesis.cancel()
-    setIsSpeaking(false)
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
   }
 
   function toggleSpeech() {
-    isSpeaking ? stopSpeech() : startSpeech()
+    isSpeaking ? stopSpeech() : startSpeech();
   }
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div
         style={{
           minHeight: '100vh',
-          background: 'var(--bg-primary)',
+          background: 'var(--bg)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <p style={{ color: 'var(--text-muted)' }}>Loading...</p>
+        <p style={{ color: 'var(--text-3)', fontSize: '0.875rem' }}>Loading...</p>
       </div>
-    )
+    );
+  }
 
-  if (!data) return null
+  if (!data) return null;
+
+  const feedName = (data.feed?.title ?? '').replace(/\s*blog\s*/gi, '').trim() || data.feed?.title;
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       {/* Top bar */}
       <div
         style={{
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          background: 'rgba(10,10,10,0.95)',
-          backdropFilter: 'blur(8px)',
+          background: 'rgba(12,12,14,0.92)',
+          backdropFilter: 'blur(12px)',
           borderBottom: '1px solid var(--border)',
-          padding: '0.75rem 1.5rem',
+          padding: '0 1.5rem',
+          height: '48px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -125,121 +119,135 @@ export default function ArticlePage() {
           style={{
             background: 'transparent',
             border: 'none',
-            color: 'var(--text-secondary)',
+            color: 'var(--text-3)',
             cursor: 'pointer',
-            fontSize: '0.875rem',
+            fontSize: '0.825rem',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.4rem',
+            gap: '0.35rem',
+            transition: 'color 0.15s',
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-2)')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-3)')}
         >
           ← Back
         </button>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* TTS controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <select
-              value={speechRate}
-              onChange={(e) => {
-                setSpeechRate(Number(e.target.value))
-                if (isSpeaking) {
-                  stopSpeech()
-                  setTimeout(startSpeech, 100)
-                }
-              }}
-              style={{
-                background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-secondary)',
-                borderRadius: '6px',
-                padding: '0.3rem 0.5rem',
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-              }}
-            >
-              <option value={0.75}>0.75x</option>
-              <option value={1}>1x</option>
-              <option value={1.25}>1.25x</option>
-              <option value={1.5}>1.5x</option>
-              <option value={2}>2x</option>
-            </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <select
+            value={speechRate}
+            onChange={(e) => {
+              setSpeechRate(Number(e.target.value));
+              if (isSpeaking) {
+                stopSpeech();
+                setTimeout(startSpeech, 100);
+              }
+            }}
+            style={{
+              background: 'var(--bg-3)',
+              border: '1px solid var(--border)',
+              color: 'var(--text-3)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '0.25rem 0.4rem',
+              fontSize: '0.75rem',
+              cursor: 'pointer',
+            }}
+          >
+            <option value={0.75}>0.75×</option>
+            <option value={1}>1×</option>
+            <option value={1.25}>1.25×</option>
+            <option value={1.5}>1.5×</option>
+            <option value={2}>2×</option>
+          </select>
 
-            <button
-              onClick={toggleSpeech}
-              style={{
-                padding: '0.35rem 0.85rem',
-                background: isSpeaking ? 'var(--bg-tertiary)' : 'transparent',
-                border: '1px solid var(--border)',
-                borderRadius: '6px',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                fontSize: '0.8rem',
-              }}
-            >
-              {isSpeaking ? '⏹ Stop' : '▶ Listen'}
-            </button>
-          </div>
+          <button
+            onClick={toggleSpeech}
+            style={{
+              padding: '0.3rem 0.75rem',
+              background: isSpeaking ? 'var(--accent-dim)' : 'var(--bg-3)',
+              border: `1px solid ${isSpeaking ? 'rgba(212,168,83,0.3)' : 'var(--border)'}`,
+              borderRadius: 'var(--radius-sm)',
+              color: isSpeaking ? 'var(--accent)' : 'var(--text-3)',
+              fontSize: '0.775rem',
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            {isSpeaking ? '⏹ Stop' : '▶ Listen'}
+          </button>
 
-          {/* Bookmark */}
           <button
             onClick={() => bookmark.mutate()}
             style={{
-              padding: '0.35rem 0.85rem',
-              background: data.isBookmarked ? 'var(--accent)' : 'transparent',
-              border: `1px solid ${data.isBookmarked ? 'var(--accent)' : 'var(--border)'}`,
-              borderRadius: '6px',
-              color: data.isBookmarked ? 'white' : 'var(--text-secondary)',
+              padding: '0.3rem 0.75rem',
+              background: data.isBookmarked ? 'var(--accent-dim)' : 'var(--bg-3)',
+              border: `1px solid ${data.isBookmarked ? 'rgba(212,168,83,0.3)' : 'var(--border)'}`,
+              borderRadius: 'var(--radius-sm)',
+              color: data.isBookmarked ? 'var(--accent)' : 'var(--text-3)',
+              fontSize: '0.775rem',
               cursor: 'pointer',
-              fontSize: '0.8rem',
+              transition: 'all 0.15s',
             }}
           >
             {data.isBookmarked ? '★ Saved' : '☆ Save'}
           </button>
 
-          {/* Original link */}
           <a
             href={data.url}
             target="_blank"
             rel="noopener noreferrer"
             style={{
-              padding: '0.35rem 0.85rem',
+              padding: '0.3rem 0.75rem',
+              background: 'var(--bg-3)',
               border: '1px solid var(--border)',
-              borderRadius: '6px',
-              color: 'var(--text-secondary)',
+              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-3)',
+              fontSize: '0.775rem',
               textDecoration: 'none',
-              fontSize: '0.8rem',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--text-2)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = 'var(--text-3)';
+              (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
             }}
           >
-            Original
+            Source
           </a>
         </div>
       </div>
 
-      {/* Article content */}
-      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '3rem 1.5rem 6rem' }}>
-        {/* Meta */}
-        <div style={{ marginBottom: '2rem' }}>
-          <p
-            style={{
-              fontSize: '0.8rem',
-              color: 'var(--accent)',
-              marginBottom: '0.75rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-            }}
-          >
-            {data.feed?.title}
-          </p>
+      {/* Article */}
+      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '3rem 2rem 6rem' }}>
+        {/* Header */}
+        <div style={{ marginBottom: '2.5rem' }}>
+          {feedName && (
+            <p
+              style={{
+                fontSize: '0.7rem',
+                color: 'var(--accent)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.08em',
+                fontWeight: 600,
+                marginBottom: '0.75rem',
+              }}
+            >
+              {feedName}
+            </p>
+          )}
 
           <h1
             style={{
-              fontSize: '2rem',
-              fontWeight: '700',
-              lineHeight: '1.25',
-              color: 'var(--text-primary)',
-              marginBottom: '1rem',
+              fontFamily: "'DM Serif Display', serif",
+              fontSize: '2.25rem',
+              fontWeight: 400,
+              lineHeight: 1.2,
+              color: 'var(--text)',
               letterSpacing: '-0.02em',
+              marginBottom: '1rem',
             }}
           >
             {data.title}
@@ -248,21 +256,30 @@ export default function ArticlePage() {
           <div
             style={{
               display: 'flex',
-              gap: '1rem',
+              alignItems: 'center',
+              gap: '0.5rem',
               fontSize: '0.8rem',
-              color: 'var(--text-muted)',
+              color: 'var(--text-3)',
               flexWrap: 'wrap',
             }}
           >
-            {data.author && <span>By {data.author}</span>}
+            {data.author && (
+              <>
+                <span>by {data.author}</span>
+                <span>·</span>
+              </>
+            )}
             {data.publishedAt && (
-              <span>
-                {new Date(data.publishedAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </span>
+              <>
+                <span>
+                  {new Date(data.publishedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </span>
+                <span>·</span>
+              </>
             )}
             {data.readingTime && <span>{data.readingTime} min read</span>}
           </div>
@@ -272,75 +289,13 @@ export default function ArticlePage() {
           style={{ border: 'none', borderTop: '1px solid var(--border)', marginBottom: '2.5rem' }}
         />
 
-        {/* Body */}
+        {/* Content */}
         <div
           ref={contentRef}
+          className="reader-content"
           dangerouslySetInnerHTML={{ __html: data.cleanContent ?? '' }}
-          style={{
-            color: 'var(--text-primary)',
-            fontSize: '1.05rem',
-            lineHeight: '1.8',
-            fontFamily: 'Georgia, serif',
-          }}
         />
       </div>
-
-      {/* Article content styles */}
-      <style>{`
-        .article-body h1, .article-body h2, .article-body h3 {
-          color: var(--text-primary);
-          margin: 2rem 0 1rem;
-          line-height: 1.3;
-        }
-        [ref] p { margin-bottom: 1.25rem; }
-        [ref] a { color: var(--accent); text-decoration: none; }
-        [ref] a:hover { text-decoration: underline; }
-        [ref] code {
-          background: var(--bg-tertiary);
-          padding: 0.15rem 0.4rem;
-          border-radius: 4px;
-          font-size: 0.9em;
-          font-family: 'Monaco', monospace;
-        }
-        [ref] pre {
-          background: var(--bg-secondary);
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          padding: 1.25rem;
-          overflow-x: auto;
-          margin: 1.5rem 0;
-        }
-        [ref] pre code { background: none; padding: 0; }
-        [ref] blockquote {
-          border-left: 3px solid var(--accent);
-          padding-left: 1.25rem;
-          margin: 1.5rem 0;
-          color: var(--text-secondary);
-          font-style: italic;
-        }
-        [ref] img {
-          max-width: 100%;
-          border-radius: 8px;
-          margin: 1.5rem 0;
-        }
-        [ref] ul, [ref] ol {
-          padding-left: 1.5rem;
-          margin-bottom: 1.25rem;
-        }
-        [ref] li { margin-bottom: 0.4rem; }
-        [ref] table {
-          width: 100%;
-          border-collapse: collapse;
-          margin: 1.5rem 0;
-          font-size: 0.9rem;
-        }
-        [ref] th, [ref] td {
-          border: 1px solid var(--border);
-          padding: 0.6rem 0.75rem;
-          text-align: left;
-        }
-        [ref] th { background: var(--bg-secondary); color: var(--text-secondary); }
-      `}</style>
     </div>
-  )
+  );
 }
