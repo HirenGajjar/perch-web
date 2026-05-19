@@ -1,191 +1,284 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useMutation } from '@tanstack/react-query'
-import { api } from '../lib/api.ts'
-import { useAuthStore } from '../store/auth.ts'
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { api } from '../lib/api.ts';
+import { useAuthStore } from '../store/auth.ts';
+import { usePageTitle } from '../hooks/usePageTitle.ts';
 
 export default function RegisterPage() {
-  const navigate = useNavigate()
-  const setAuth = useAuthStore(s => s.setAuth)
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const navigate = useNavigate();
+  const setAuth = useAuthStore((s) => s.setAuth);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  usePageTitle('Create account');
 
   const register = useMutation({
     mutationFn: async () => {
-      const res = await api.post('/auth/register', { name, email, password })
-      return res.data
+      const res = await api.post('/auth/register', { name, email, password });
+      return res.data;
     },
     onSuccess: (data) => {
-      setAuth(data.user, data.token)
-      navigate('/')
+      setAuth(data.user, data.token);
+      navigate('/');
     },
     onError: (err: any) => {
-      setError(err.response?.data?.error ?? 'Registration failed')
-    }
-  })
+      setError(err.response?.data?.error ?? 'Registration failed');
+    },
+  });
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'var(--bg-primary)'
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '400px',
-        padding: '2.5rem',
-        background: 'var(--bg-secondary)',
-        border: '1px solid var(--border)',
-        borderRadius: '12px',
-      }}>
-        <h1 style={{
-          fontSize: '1.5rem',
-          fontWeight: '600',
-          marginBottom: '0.5rem',
-          color: 'var(--text-primary)'
-        }}>
-          Create your account
-        </h1>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.9rem' }}>
-          Start reading what matters
-        </p>
-
-        {error && (
-          <div style={{
-            padding: '0.75rem 1rem',
-            background: '#2a1515',
-            border: '1px solid #5a2020',
-            borderRadius: '8px',
-            color: '#ff6b6b',
-            fontSize: '0.875rem',
-            marginBottom: '1.5rem'
-          }}>
-            {error}
-          </div>
-        )}
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.8rem',
-              color: 'var(--text-secondary)',
-              marginBottom: '0.5rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
-              Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        background: 'var(--bg)',
+      }}
+    >
+      {/* Left panel */}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '3rem 2rem',
+        }}
+      >
+        <div style={{ width: '100%', maxWidth: '360px' }}>
+          {/* Logo */}
+          <div style={{ marginBottom: '2.5rem' }}>
+            <div
               style={{
-                width: '100%',
-                padding: '0.75rem 1rem',
-                background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                color: 'var(--text-primary)',
-                fontSize: '0.95rem',
-                outline: 'none',
+                fontFamily: "'DM Serif Display', serif",
+                fontSize: '2rem',
+                color: 'var(--text)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1,
+                marginBottom: '0.4rem',
               }}
-            />
+            >
+              perch
+            </div>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-3)', lineHeight: 1.5 }}>
+              Create your account
+            </p>
           </div>
 
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.8rem',
-              color: 'var(--text-secondary)',
-              marginBottom: '0.5rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+          {/* Error */}
+          {error && (
+            <div
               style={{
-                width: '100%',
-                padding: '0.75rem 1rem',
-                background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                color: 'var(--text-primary)',
-                fontSize: '0.95rem',
-                outline: 'none',
+                padding: '0.65rem 0.9rem',
+                background: 'rgba(224,85,85,0.08)',
+                border: '1px solid rgba(224,85,85,0.2)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--red)',
+                fontSize: '0.825rem',
+                marginBottom: '1.25rem',
               }}
-            />
-          </div>
+            >
+              {error}
+            </div>
+          )}
 
-          <div>
-            <label style={{
-              display: 'block',
-              fontSize: '0.8rem',
-              color: 'var(--text-secondary)',
-              marginBottom: '0.5rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em'
-            }}>
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && register.mutate()}
+          {/* Form */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  marginBottom: '0.4rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.07em',
+                  fontWeight: 500,
+                }}
+              >
+                Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Andrej Karpathy"
+                style={{
+                  width: '100%',
+                  padding: '0.7rem 0.9rem',
+                  background: 'var(--bg-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text)',
+                  fontSize: '0.9rem',
+                  transition: 'border-color 0.15s',
+                }}
+                onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+              />
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  marginBottom: '0.4rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.07em',
+                  fontWeight: 500,
+                }}
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                style={{
+                  width: '100%',
+                  padding: '0.7rem 0.9rem',
+                  background: 'var(--bg-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text)',
+                  fontSize: '0.9rem',
+                  transition: 'border-color 0.15s',
+                }}
+                onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+              />
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: 'block',
+                  fontSize: '0.72rem',
+                  color: 'var(--text-3)',
+                  marginBottom: '0.4rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.07em',
+                  fontWeight: 500,
+                }}
+              >
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && register.mutate()}
+                placeholder="Min. 8 characters"
+                style={{
+                  width: '100%',
+                  padding: '0.7rem 0.9rem',
+                  background: 'var(--bg-2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text)',
+                  fontSize: '0.9rem',
+                  transition: 'border-color 0.15s',
+                }}
+                onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
+                onBlur={(e) => (e.target.style.borderColor = 'var(--border)')}
+              />
+            </div>
+
+            <button
+              onClick={() => register.mutate()}
+              disabled={register.isPending || !email || !password}
               style={{
-                width: '100%',
-                padding: '0.75rem 1rem',
-                background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                color: 'var(--text-primary)',
-                fontSize: '0.95rem',
-                outline: 'none',
+                marginTop: '0.25rem',
+                padding: '0.75rem',
+                background:
+                  register.isPending || !email || !password ? 'var(--bg-3)' : 'var(--accent)',
+                color: register.isPending || !email || !password ? 'var(--text-3)' : '#0c0c0e',
+                border: 'none',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                cursor: register.isPending || !email || !password ? 'not-allowed' : 'pointer',
+                transition: 'background 0.15s',
               }}
-            />
+            >
+              {register.isPending ? 'Creating account...' : 'Create account'}
+            </button>
           </div>
 
-          <button
-            onClick={() => register.mutate()}
-            disabled={register.isPending}
+          <p
             style={{
-              marginTop: '0.5rem',
-              padding: '0.85rem',
-              background: register.isPending ? 'var(--bg-tertiary)' : 'var(--accent)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '0.95rem',
-              fontWeight: '600',
-              cursor: register.isPending ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s',
+              marginTop: '1.5rem',
+              fontSize: '0.825rem',
+              color: 'var(--text-3)',
+              textAlign: 'center',
             }}
           >
-            {register.isPending ? 'Creating account...' : 'Create account'}
-          </button>
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              style={{
+                color: 'var(--accent)',
+                textDecoration: 'none',
+              }}
+            >
+              Sign in
+            </Link>
+          </p>
         </div>
+      </div>
 
-        <p style={{
-          marginTop: '1.5rem',
-          textAlign: 'center',
-          color: 'var(--text-secondary)',
-          fontSize: '0.875rem'
-        }}>
-          Already have an account?{' '}
-          <Link to="/login" style={{ color: 'var(--accent)', textDecoration: 'none' }}>
-            Sign in
-          </Link>
-        </p>
+      {/* Right panel */}
+      <div
+        style={{
+          width: '420px',
+          background: 'var(--bg-2)',
+          borderLeft: '1px solid var(--border)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '3rem',
+        }}
+      >
+        <div style={{ maxWidth: '300px' }}>
+          <div
+            style={{
+              fontFamily: "'DM Serif Display', serif",
+              fontSize: '1.5rem',
+              color: 'var(--text)',
+              lineHeight: 1.4,
+              marginBottom: '1.5rem',
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Your reading,{' '}
+            <span style={{ color: 'var(--accent)', fontStyle: 'italic' }}>your way.</span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {[
+              { icon: '◎', text: 'Follow anyone who writes' },
+              { icon: '◎', text: 'Clean distraction-free reader' },
+              { icon: '◎', text: 'Listen while you work' },
+              { icon: '◎', text: 'Highlight what matters' },
+            ].map((item) => (
+              <div
+                key={item.text}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}
+              >
+                <span style={{ color: 'var(--accent)', fontSize: '0.6rem' }}>{item.icon}</span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-2)' }}>{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
-  )
+  );
 }
