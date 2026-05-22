@@ -20,19 +20,19 @@ export default function FeedPage() {
   const [addError, setAddError] = useState('');
   const [showAddFeed, setShowAddFeed] = useState(false);
   const [activeFeedId, setActiveFeedId] = useState<string | null>(
-  () => localStorage.getItem('activeFeedId')
-);
+    () => localStorage.getItem('activeFeedId')
+  );
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
-function selectFeed(feedId: string | null) {
-  if (feedId) {
-    localStorage.setItem('activeFeedId', feedId);
-  } else {
-    localStorage.removeItem('activeFeedId');
+  function selectFeed(feedId: string | null) {
+    if (feedId) {
+      localStorage.setItem('activeFeedId', feedId);
+    } else {
+      localStorage.removeItem('activeFeedId');
+    }
+    setActiveFeedId(feedId);
   }
-  setActiveFeedId(feedId);
-}
 
   const view = location.pathname === '/library' ? 'library' : 'home';
 
@@ -58,7 +58,9 @@ function selectFeed(feedId: string | null) {
   const rawTitle = feeds.find((s: any) => s.feedId === activeFeedId)?.feed.title ?? '';
   const activeTitle = activeFeedId
     ? rawTitle.replace(/\s*blog\s*/gi, '').trim() || rawTitle
-    : view === 'library' ? 'Library' : 'Home';
+    : view === 'library'
+      ? 'Library'
+      : 'Home';
   usePageTitle(activeTitle);
 
   const addFeed = useMutation({
@@ -114,11 +116,11 @@ function selectFeed(feedId: string | null) {
     setSpeakingId(article.id);
   }
 
- function handleLogout() {
-  localStorage.removeItem('activeFeedId');
-  logout();
-  navigate('/login');
-}
+  function handleLogout() {
+    localStorage.removeItem('activeFeedId');
+    logout();
+    navigate('/login');
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', overflow: 'hidden' }}>
@@ -126,7 +128,7 @@ function selectFeed(feedId: string | null) {
         user={user}
         feeds={feeds}
         activeFeedId={activeFeedId}
-        onFeedSelect={setActiveFeedId}
+        onFeedSelect={selectFeed}
         onAddFeed={() => setShowAddFeed(true)}
         onLogout={handleLogout}
       />
