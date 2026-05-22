@@ -65,9 +65,6 @@ export function Sidebar({ user, feeds, allArticlesCount, activeFeedId, onFeedSel
           style={{ padding: '0.45rem 0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: !activeFeedId && location.pathname === '/' ? 'var(--bg-hover)' : 'transparent', marginBottom: '1px' }}
         >
           <span style={{ fontSize: '0.8rem', color: !activeFeedId && location.pathname === '/' ? 'var(--text)' : 'var(--text-2)' }}>All</span>
-          <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', background: 'var(--bg-3)', padding: '0.1rem 0.4rem', borderRadius: '20px' }}>
-  {allArticlesCount > 9 ? '9+' : allArticlesCount}
-</span>
         </div>
 
         {feeds.map((sub: any) => (
