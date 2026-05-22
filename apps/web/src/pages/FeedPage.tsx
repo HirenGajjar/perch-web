@@ -19,9 +19,20 @@ export default function FeedPage() {
   const [feedUrl, setFeedUrl] = useState('');
   const [addError, setAddError] = useState('');
   const [showAddFeed, setShowAddFeed] = useState(false);
-  const [activeFeedId, setActiveFeedId] = useState<string | null>(null);
+  const [activeFeedId, setActiveFeedId] = useState<string | null>(
+  () => localStorage.getItem('activeFeedId')
+);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+
+function selectFeed(feedId: string | null) {
+  if (feedId) {
+    localStorage.setItem('activeFeedId', feedId);
+  } else {
+    localStorage.removeItem('activeFeedId');
+  }
+  setActiveFeedId(feedId);
+}
 
   const view = location.pathname === '/library' ? 'library' : 'home';
 
@@ -103,17 +114,17 @@ export default function FeedPage() {
     setSpeakingId(article.id);
   }
 
-  function handleLogout() {
-    logout();
-    navigate('/login');
-  }
+ function handleLogout() {
+  localStorage.removeItem('activeFeedId');
+  logout();
+  navigate('/login');
+}
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', overflow: 'hidden' }}>
       <Sidebar
         user={user}
         feeds={feeds}
-        allArticlesCount={allArticles.length}
         activeFeedId={activeFeedId}
         onFeedSelect={setActiveFeedId}
         onAddFeed={() => setShowAddFeed(true)}

@@ -4,14 +4,13 @@ import { FeedIcon } from './FeedIcon.tsx';
 interface Props {
   user: any;
   feeds: any[];
-  allArticlesCount: number;
   activeFeedId: string | null;
   onFeedSelect: (feedId: string | null) => void;
   onAddFeed: () => void;
   onLogout: () => void;
 }
 
-export function Sidebar({ user, feeds, allArticlesCount, activeFeedId, onFeedSelect, onAddFeed, onLogout }: Props) {
+export function Sidebar({ user, feeds, activeFeedId, onFeedSelect, onAddFeed, onLogout }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
 
