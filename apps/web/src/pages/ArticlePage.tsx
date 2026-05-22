@@ -11,6 +11,7 @@ export default function ArticlePage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechRate, setSpeechRate] = useState(1);
+  const [fontSize, setFontSize] = useState(18);
 
   const { data, isLoading } = useQuery({
     queryKey: ['article', id],
@@ -160,6 +161,42 @@ export default function ArticlePage() {
             <option value={2}>2×</option>
           </select>
 
+            {/* Font size controls */}
+<div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+  <button
+    onClick={() => setFontSize(f => Math.max(14, f - 2))}
+    style={{
+      width: '28px', height: '28px',
+      background: 'var(--bg-3)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-sm)',
+      color: 'var(--text-3)',
+      fontSize: '0.8rem',
+      cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}
+  >
+    A-
+  </button>
+  <button
+    onClick={() => setFontSize(f => Math.min(28, f + 2))}
+    style={{
+      width: '28px', height: '28px',
+      background: 'var(--bg-3)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-sm)',
+      color: 'var(--text-3)',
+      fontSize: '0.9rem',
+      cursor: 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}
+  >
+    A+
+  </button>
+</div>
+
+
+
           <button
             onClick={toggleSpeech}
             style={{
@@ -294,6 +331,7 @@ export default function ArticlePage() {
           ref={contentRef}
           className="reader-content"
           dangerouslySetInnerHTML={{ __html: data.cleanContent ?? '' }}
+            style={{ fontSize: `${fontSize}px` }}
         />
       </div>
     </div>

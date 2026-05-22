@@ -65,13 +65,15 @@ export function Sidebar({ user, feeds, allArticlesCount, activeFeedId, onFeedSel
           style={{ padding: '0.45rem 0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: !activeFeedId && location.pathname === '/' ? 'var(--bg-hover)' : 'transparent', marginBottom: '1px' }}
         >
           <span style={{ fontSize: '0.8rem', color: !activeFeedId && location.pathname === '/' ? 'var(--text)' : 'var(--text-2)' }}>All</span>
-          <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', background: 'var(--bg-3)', padding: '0.1rem 0.4rem', borderRadius: '20px' }}>{allArticlesCount}</span>
+          <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', background: 'var(--bg-3)', padding: '0.1rem 0.4rem', borderRadius: '20px' }}>
+  {allArticlesCount > 9 ? '9+' : allArticlesCount}
+</span>
         </div>
 
         {feeds.map((sub: any) => (
           <div
             key={sub.id}
-            onClick={() => { onFeedSelect(sub.feedId === activeFeedId ? null : sub.feedId); navigate('/'); }}
+            onClick={() => { if (sub.feedId !== activeFeedId) { onFeedSelect(sub.feedId); navigate('/'); } }}
             style={{ padding: '0.45rem 0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: activeFeedId === sub.feedId ? 'var(--bg-hover)' : 'transparent', marginBottom: '1px', transition: 'background 0.15s' }}
             onMouseEnter={(e) => { if (activeFeedId !== sub.feedId) e.currentTarget.style.background = 'var(--bg-3)'; }}
             onMouseLeave={(e) => { if (activeFeedId !== sub.feedId) e.currentTarget.style.background = 'transparent'; }}
@@ -83,7 +85,7 @@ export function Sidebar({ user, feeds, allArticlesCount, activeFeedId, onFeedSel
               </span>
             </div>
             <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', background: 'var(--bg-3)', padding: '0.1rem 0.4rem', borderRadius: '20px', flexShrink: 0, marginLeft: '0.25rem' }}>
-              {sub.feed._count.articles}
+              {sub.feed._count.articles > 9 ? '9+' : sub.feed._count.articles}
             </span>
           </div>
         ))}

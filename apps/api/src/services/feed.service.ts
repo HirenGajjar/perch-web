@@ -12,7 +12,21 @@ function stripHtml(html: string): string {
   return html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<form[^>]*>[\s\S]*?<\/form>/gi, '')
     .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8211;/g, '–')
+    .replace(/&#8212;/g, '—')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#\d+;/g, '')
+    .replace(/&[a-z]+;/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -33,6 +47,14 @@ function makeImagesAbsolute(html: string, baseUrl: string): string {
   return html
     .replace(/src="\/([^"]+)"/g, `src="${base.origin}/$1"`)
     .replace(/src='\/([^']+)'/g, `src='${base.origin}/$1'`);
+}
+
+function cleanContent(html: string): string {
+  return html
+    .replace(/<form[^>]*>[\s\S]*?<\/form>/gi, '')
+    .replace(/<div[^>]*class="[^"]*subscribe[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
+    .replace(/<div[^>]*class="[^"]*newsletter[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
+    .replace(/<div[^>]*class="[^"]*signup[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
 }
 
 async function discoverFeedUrl(url: string): Promise<string> {
@@ -150,7 +172,7 @@ export async function addFeed(url: string, userId: string) {
             feedId: dbFeed.id,
             url: item.link,
             title: item.title ?? 'Untitled',
-            cleanContent: makeImagesAbsolute(rawContent, feed.link ?? ''),
+            cleanContent: cleanContent(makeImagesAbsolute(rawContent, feed.link ?? '')),
             excerpt: plainText.slice(0, 300),
             author: cleanAuthor(item.creator),
             imageUrl: item.enclosure?.url ?? null,
