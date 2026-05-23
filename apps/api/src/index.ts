@@ -7,6 +7,7 @@ import feedRoutes from './routes/feed.routes.ts';
 import articleRoutes from './routes/article.routes.ts';
 import bookmarkRoutes from './routes/bookmark.routes.ts';
 import highlightRoutes from './routes/highlight.routes.ts';
+import { generalLimiter, authLimiter, feedLimiter } from './middleware/rateLimit.middleware.ts';
 
 dotenv.config();
 
@@ -30,13 +31,14 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json());
+app.use(generalLimiter);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use('/auth', authRoutes);
-app.use('/feeds', feedRoutes);
+app.use('/auth', authLimiter, authRoutes);
+app.use('/feeds', feedLimiter, feedRoutes);
 app.use('/articles', articleRoutes);
 app.use('/bookmarks', bookmarkRoutes);
 app.use('/highlights', highlightRoutes);
