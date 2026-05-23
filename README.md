@@ -63,3 +63,9 @@ MIT
 ## Inspiration
 
 Perch was originally built by [Michael McGuiness](https://michaelmcguiness.com/) as a native app. When the company shut down, I missed it enough to rebuild it as a web app. This is my tribute to that product — and my attempt to keep the reading experience it stood for alive.
+
+## Screenshots
+
+![Feed](docs/feed.png)
+![Reader](docs/reader.png)
+![Login](docs/login.png)
