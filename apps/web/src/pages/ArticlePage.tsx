@@ -15,6 +15,7 @@ export default function ArticlePage() {
   const [speechRate, setSpeechRate] = useState(1);
   const [fontSize, setFontSize] = useState(18);
   const [popup, setPopup] = useState<{ x: number; y: number } | null>(null);
+  const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null);
   const [pendingSelection, setPendingSelection] = useState<{
     text: string;
     startOffset: number;
@@ -47,6 +48,15 @@ export default function ArticlePage() {
       window.getSelection()?.removeAllRanges();
     },
   });
+
+  const deleteHighlight = useMutation({
+  mutationFn: (highlightId: string) => api.delete(`/highlights/${highlightId}`),
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['article', id] });
+    setPopup(null);
+    setPendingSelection(null);
+  },
+});
 
   const saveScroll = useMutation({
     mutationFn: (scrollOffset: number) => api.patch(`/articles/${id}/scroll`, { scrollOffset }),
@@ -96,20 +106,26 @@ export default function ArticlePage() {
     isSpeaking ? stopSpeech() : startSpeech();
   }
 
-  function handleMouseUp() {
-    if (!contentRef.current) return;
-    const result = getSelectionOffsets(contentRef.current);
-    if (!result) { setPopup(null); return; }
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    setPendingSelection(result);
-    setPopup({
-      x: rect.left + rect.width / 2,
-      y: rect.top,
-    });
+  function handleMouseUp(e: React.MouseEvent) {
+  const target = e.target as HTMLElement;
+  const mark = target.closest('mark[data-highlight-id]') as HTMLElement | null;
+  if (mark) {
+    setEditingHighlightId(mark.dataset.highlightId!);
+    setPendingSelection(null);
+    setPopup({ x: e.clientX, y: e.clientY });
+    return;
   }
+  if (!contentRef.current) return;
+  const result = getSelectionOffsets(contentRef.current);
+  if (!result) { setPopup(null); return; }
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+  const range = selection.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+  setEditingHighlightId(null);
+  setPendingSelection(result);
+  setPopup({ x: rect.left + rect.width / 2, y: rect.top });
+}
 
   if (isLoading) {
     return (
@@ -239,17 +255,21 @@ export default function ArticlePage() {
 
       {/* Highlight popup */}
       {popup && (
-        <HighlightPopup
-          x={popup.x}
-          y={popup.y}
-          onColor={(color) => {
-            if (pendingSelection) {
-              addHighlight.mutate({ ...pendingSelection, color });
-            }
-          }}
-          onClose={() => { setPopup(null); setPendingSelection(null); }}
-        />
-      )}
+  <HighlightPopup
+    x={popup.x}
+    y={popup.y}
+    mode={editingHighlightId ? 'edit' : 'create'}
+    onColor={(color) => {
+      if (editingHighlightId) {
+        deleteHighlight.mutate(editingHighlightId);
+      } else if (pendingSelection) {
+        addHighlight.mutate({ ...pendingSelection, color });
+      }
+    }}
+    onDelete={editingHighlightId ? () => deleteHighlight.mutate(editingHighlightId) : undefined}
+    onClose={() => { setPopup(null); setPendingSelection(null); setEditingHighlightId(null); }}
+  />
+)}
     </div>
   );
 }

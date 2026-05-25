@@ -1,4 +1,6 @@
 import RSSParser from 'rss-parser';
+import { JSDOM } from 'jsdom';
+import { Readability } from '@mozilla/readability';
 import { prisma } from '../lib/prisma.ts';
 
 const parser = new RSSParser();
@@ -33,7 +35,6 @@ function stripHtml(html: string): string {
 
 function cleanAuthor(author: string | undefined | null): string | null {
   if (!author) return null;
-  // Remove patterns like "hidden (name)", "Name (handle)", etc.
   const cleaned = author
     .replace(/^hidden\s*/i, '')
     .replace(/\s*\([^)]*\)\s*/g, '')
@@ -55,6 +56,25 @@ function cleanContent(html: string): string {
     .replace(/<div[^>]*class="[^"]*subscribe[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
     .replace(/<div[^>]*class="[^"]*newsletter[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '')
     .replace(/<div[^>]*class="[^"]*signup[^"]*"[^>]*>[\s\S]*?<\/div>/gi, '');
+}
+
+async function fetchFullContent(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Perch RSS Reader/1.0)',
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const dom = new JSDOM(html, { url });
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
+    return article?.content ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function discoverFeedUrl(url: string): Promise<string> {
@@ -159,11 +179,22 @@ export async function addFeed(url: string, userId: string) {
     const articles = (feed.items ?? []).slice(0, 20);
 
     await Promise.allSettled(
-      articles.map((item) => {
-        if (!item.link) return Promise.resolve();
+      articles.map(async (item) => {
+        if (!item.link) return;
 
         const rawContent = item['content:encoded'] ?? item.content ?? item.summary ?? '';
         const plainText = stripHtml(rawContent);
+
+        // If content is too short, fetch full article from the URL
+        let finalContent = rawContent;
+        if (plainText.length < 500 && item.link) {
+          const full = await fetchFullContent(item.link);
+          if (full && stripHtml(full).length > plainText.length) {
+            finalContent = full;
+          }
+        }
+
+        const finalPlainText = stripHtml(finalContent);
 
         return prisma.article.upsert({
           where: { url: item.link },
@@ -172,11 +203,11 @@ export async function addFeed(url: string, userId: string) {
             feedId: dbFeed.id,
             url: item.link,
             title: item.title ?? 'Untitled',
-            cleanContent: cleanContent(makeImagesAbsolute(rawContent, feed.link ?? '')),
-            excerpt: plainText.slice(0, 300),
+            cleanContent: cleanContent(makeImagesAbsolute(finalContent, feed.link ?? '')),
+            excerpt: finalPlainText.slice(0, 300),
             author: cleanAuthor(item.creator),
             imageUrl: item.enclosure?.url ?? null,
-            readingTime: estimateReadingTime(plainText),
+            readingTime: estimateReadingTime(finalPlainText),
             publishedAt: item.pubDate ? new Date(item.pubDate) : null,
           },
         });
