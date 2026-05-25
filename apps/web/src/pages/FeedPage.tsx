@@ -86,6 +86,15 @@ export default function FeedPage() {
     },
   });
 
+const removeFeed = useMutation({
+  mutationFn: (feedId: string) => api.delete(`/feeds/${feedId}`),
+  onSuccess: () => {
+    selectFeed(null);
+    queryClient.invalidateQueries({ queryKey: ['feeds'] });
+    queryClient.invalidateQueries({ queryKey: ['articles'] });
+  },
+});
+
   const filteredArticles = useMemo(() => {
     let list = activeFeedId
       ? allArticles.filter((a: any) => a.feed.id === activeFeedId)
@@ -124,14 +133,15 @@ export default function FeedPage() {
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--bg)', overflow: 'hidden' }}>
-      <Sidebar
-        user={user}
-        feeds={feeds}
-        activeFeedId={activeFeedId}
-        onFeedSelect={selectFeed}
-        onAddFeed={() => setShowAddFeed(true)}
-        onLogout={handleLogout}
-      />
+     <Sidebar
+  user={user}
+  feeds={feeds}
+  activeFeedId={activeFeedId}
+  onFeedSelect={selectFeed}
+  onAddFeed={() => setShowAddFeed(true)}
+  onRemoveFeed={(feedId) => removeFeed.mutate(feedId)}
+  onLogout={handleLogout}
+/>
 
       <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 0 4rem' }}>
         <div style={{ maxWidth: '720px', margin: '0 auto', padding: '0 2rem' }}>

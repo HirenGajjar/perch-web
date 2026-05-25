@@ -7,10 +7,12 @@ interface Props {
   activeFeedId: string | null;
   onFeedSelect: (feedId: string | null) => void;
   onAddFeed: () => void;
+  onRemoveFeed: (feedId: string) => void;
   onLogout: () => void;
 }
 
-export function Sidebar({ user, feeds, activeFeedId, onFeedSelect, onAddFeed, onLogout }: Props) {
+export function Sidebar({ user, feeds, activeFeedId, onFeedSelect, onAddFeed, onRemoveFeed, onLogout }: Props) {
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -66,25 +68,45 @@ export function Sidebar({ user, feeds, activeFeedId, onFeedSelect, onAddFeed, on
           <span style={{ fontSize: '0.8rem', color: !activeFeedId && location.pathname === '/' ? 'var(--text)' : 'var(--text-2)' }}>All</span>
         </div>
 
-        {feeds.map((sub: any) => (
-          <div
-            key={sub.id}
-            onClick={() => { if (sub.feedId !== activeFeedId) { onFeedSelect(sub.feedId); navigate('/'); } }}
-            style={{ padding: '0.45rem 0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: activeFeedId === sub.feedId ? 'var(--bg-hover)' : 'transparent', marginBottom: '1px', transition: 'background 0.15s' }}
-            onMouseEnter={(e) => { if (activeFeedId !== sub.feedId) e.currentTarget.style.background = 'var(--bg-3)'; }}
-            onMouseLeave={(e) => { if (activeFeedId !== sub.feedId) e.currentTarget.style.background = 'transparent'; }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden' }}>
-              <FeedIcon feed={sub.feed} />
-              <span style={{ fontSize: '0.8rem', color: activeFeedId === sub.feedId ? 'var(--text)' : 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {sub.customTitle ?? sub.feed.title}
-              </span>
-            </div>
-            <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', background: 'var(--bg-3)', padding: '0.1rem 0.4rem', borderRadius: '20px', flexShrink: 0, marginLeft: '0.25rem' }}>
-              {sub.feed._count.articles > 9 ? '9+' : sub.feed._count.articles}
-            </span>
-          </div>
-        ))}
+       {feeds.map((sub: any) => (
+  <div
+    key={sub.id}
+    onClick={() => { if (sub.feedId !== activeFeedId) { onFeedSelect(sub.feedId); navigate('/'); } }}
+    style={{ padding: '0.45rem 0.5rem', borderRadius: 'var(--radius-sm)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: activeFeedId === sub.feedId ? 'var(--bg-hover)' : 'transparent', marginBottom: '1px', transition: 'background 0.15s', position: 'relative' }}
+    onMouseEnter={(e) => {
+      if (activeFeedId !== sub.feedId) e.currentTarget.style.background = 'var(--bg-3)';
+      const btn = e.currentTarget.querySelector('.remove-btn') as HTMLElement;
+      if (btn) btn.style.opacity = '1';
+    }}
+    onMouseLeave={(e) => {
+      if (activeFeedId !== sub.feedId) e.currentTarget.style.background = 'transparent';
+      const btn = e.currentTarget.querySelector('.remove-btn') as HTMLElement;
+      if (btn) btn.style.opacity = '0';
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', flex: 1 }}>
+      <FeedIcon feed={sub.feed} />
+      <span style={{ fontSize: '0.8rem', color: activeFeedId === sub.feedId ? 'var(--text)' : 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {sub.customTitle ?? sub.feed.title}
+      </span>
+    </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
+      <span style={{ fontSize: '0.6rem', color: 'var(--text-3)', background: 'var(--bg-3)', padding: '0.1rem 0.4rem', borderRadius: '20px' }}>
+        {sub.feed._count.articles > 9 ? '9+' : sub.feed._count.articles}
+      </span>
+      <button
+        className="remove-btn"
+        onClick={(e) => { e.stopPropagation(); onRemoveFeed(sub.feedId); }}
+        style={{ opacity: 0, width: '16px', height: '16px', background: 'transparent', border: 'none', color: 'var(--text-3)', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.15s, opacity 0.15s', borderRadius: '3px', padding: 0 }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = '#ff6384'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-3)'; }}
+        title="Remove feed"
+      >
+        ×
+      </button>
+    </div>
+  </div>
+))}
 
         <button
           onClick={onAddFeed}
