@@ -61,10 +61,8 @@ function cleanContent(html: string): string {
 async function fetchFullContent(url: string): Promise<string | null> {
   try {
     const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Perch RSS Reader/1.0)',
-      },
-      signal: AbortSignal.timeout(10000),
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Perch RSS Reader/1.0)' },
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
     const html = await res.text();
@@ -178,14 +176,13 @@ export async function addFeed(url: string, userId: string) {
   if (!existing) {
     const articles = (feed.items ?? []).slice(0, 20);
 
-    await Promise.allSettled(
-      articles.map(async (item) => {
-        if (!item.link) return;
+    for (const item of articles) {
+      try {
+        if (!item.link) continue;
 
         const rawContent = item['content:encoded'] ?? item.content ?? item.summary ?? '';
         const plainText = stripHtml(rawContent);
 
-        // If content is too short, fetch full article from the URL
         let finalContent = rawContent;
         if (plainText.length < 500 && item.link) {
           const full = await fetchFullContent(item.link);
@@ -196,9 +193,14 @@ export async function addFeed(url: string, userId: string) {
 
         const finalPlainText = stripHtml(finalContent);
 
-        return prisma.article.upsert({
+        await prisma.article.upsert({
           where: { url: item.link },
-          update: {},
+          update: {
+            cleanContent: finalPlainText.length > 500
+              ? cleanContent(makeImagesAbsolute(finalContent, feed.link ?? ''))
+              : undefined,
+            readingTime: estimateReadingTime(finalPlainText),
+          },
           create: {
             feedId: dbFeed.id,
             url: item.link,
@@ -211,8 +213,10 @@ export async function addFeed(url: string, userId: string) {
             publishedAt: item.pubDate ? new Date(item.pubDate) : null,
           },
         });
-      })
-    );
+      } catch {
+        continue;
+      }
+    }
   }
 
   return dbFeed;
