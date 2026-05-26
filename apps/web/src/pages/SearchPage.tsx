@@ -27,13 +27,7 @@ export default function SearchPage() {
   // Discover search via Feedly
   const { data: discoverData, isLoading: discoverLoading } = useQuery({
     queryKey: ['discover', submitted],
-    queryFn: async () => {
-      const res = await fetch(
-        `https://cloud.feedly.com/v3/search/feeds?query=${encodeURIComponent(submitted)}&count=10`
-      );
-      const data = await res.json();
-      return data;
-    },
+    queryFn: () => api.get(`/discover?q=${encodeURIComponent(submitted)}`).then((r) => r.data),
     enabled: submitted.length >= 2 && mode === 'discover',
   });
 
