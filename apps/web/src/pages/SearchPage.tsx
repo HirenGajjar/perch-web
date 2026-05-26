@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api.ts';
 import { usePageTitle } from '../hooks/usePageTitle.ts';
 import { ArticleCard } from '../components/ArticleCard.tsx';
-import { FeedIcon } from '../components/FeedIcon.tsx';
 import { stripHtml } from '../lib/stripHtml.ts';
 
 export default function SearchPage() {
