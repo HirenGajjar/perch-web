@@ -50,13 +50,13 @@ export default function ArticlePage() {
   });
 
   const deleteHighlight = useMutation({
-  mutationFn: (highlightId: string) => api.delete(`/highlights/${highlightId}`),
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['article', id] });
-    setPopup(null);
-    setPendingSelection(null);
-  },
-});
+    mutationFn: (highlightId: string) => api.delete(`/highlights/${highlightId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['article', id] });
+      setPopup(null);
+      setPendingSelection(null);
+    },
+  });
 
   const saveScroll = useMutation({
     mutationFn: (scrollOffset: number) => api.patch(`/articles/${id}/scroll`, { scrollOffset }),
@@ -107,25 +107,25 @@ export default function ArticlePage() {
   }
 
   function handleMouseUp(e: React.MouseEvent) {
-  const target = e.target as HTMLElement;
-  const mark = target.closest('mark[data-highlight-id]') as HTMLElement | null;
-  if (mark) {
-    setEditingHighlightId(mark.dataset.highlightId!);
-    setPendingSelection(null);
-    setPopup({ x: e.clientX, y: e.clientY });
-    return;
+    const target = e.target as HTMLElement;
+    const mark = target.closest('mark[data-highlight-id]') as HTMLElement | null;
+    if (mark) {
+      setEditingHighlightId(mark.dataset.highlightId!);
+      setPendingSelection(null);
+      setPopup({ x: e.clientX, y: e.clientY });
+      return;
+    }
+    if (!contentRef.current) return;
+    const result = getSelectionOffsets(contentRef.current);
+    if (!result) { setPopup(null); return; }
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    setEditingHighlightId(null);
+    setPendingSelection(result);
+    setPopup({ x: rect.left + rect.width / 2, y: rect.top });
   }
-  if (!contentRef.current) return;
-  const result = getSelectionOffsets(contentRef.current);
-  if (!result) { setPopup(null); return; }
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return;
-  const range = selection.getRangeAt(0);
-  const rect = range.getBoundingClientRect();
-  setEditingHighlightId(null);
-  setPendingSelection(result);
-  setPopup({ x: rect.left + rect.width / 2, y: rect.top });
-}
 
   if (isLoading) {
     return (
@@ -136,11 +136,12 @@ export default function ArticlePage() {
   }
 
   if (!data) {
-  navigate('/');
-  return null;
-}
+    navigate('/');
+    return null;
+  }
 
   const feedName = (data.feed?.title ?? '').replace(/\s*blog\s*/gi, '').trim() || data.feed?.title;
+  const hasFullContent = (data.cleanContent?.length ?? 0) >= 500;
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
@@ -244,6 +245,23 @@ export default function ArticlePage() {
 
         <hr style={{ border: 'none', borderTop: '1px solid var(--border)', marginBottom: '2.5rem' }} />
 
+        {/* Short content notice */}
+        {!hasFullContent && (
+          <div style={{ padding: '1.5rem', background: 'var(--bg-3)', border: '1px solid var(--border)', borderRadius: '8px', textAlign: 'center', marginBottom: '2rem' }}>
+            <p style={{ color: 'var(--text-2)', fontSize: '0.875rem', marginBottom: '1rem', lineHeight: 1.6 }}>
+              Full content isn't available in this feed.
+            </p>
+            <a
+              href={data.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ padding: '0.55rem 1.25rem', background: 'var(--accent)', color: '#0c0c0e', borderRadius: 'var(--radius-sm)', fontSize: '0.85rem', fontWeight: 600, textDecoration: 'none' }}
+            >
+              Read on {new URL(data.url).hostname} →
+            </a>
+          </div>
+        )}
+
         {/* Content */}
         <div
           ref={contentRef}
@@ -258,21 +276,21 @@ export default function ArticlePage() {
 
       {/* Highlight popup */}
       {popup && (
-  <HighlightPopup
-    x={popup.x}
-    y={popup.y}
-    mode={editingHighlightId ? 'edit' : 'create'}
-    onColor={(color) => {
-      if (editingHighlightId) {
-        deleteHighlight.mutate(editingHighlightId);
-      } else if (pendingSelection) {
-        addHighlight.mutate({ ...pendingSelection, color });
-      }
-    }}
-    onDelete={editingHighlightId ? () => deleteHighlight.mutate(editingHighlightId) : undefined}
-    onClose={() => { setPopup(null); setPendingSelection(null); setEditingHighlightId(null); }}
-  />
-)}
+        <HighlightPopup
+          x={popup.x}
+          y={popup.y}
+          mode={editingHighlightId ? 'edit' : 'create'}
+          onColor={(color) => {
+            if (editingHighlightId) {
+              deleteHighlight.mutate(editingHighlightId);
+            } else if (pendingSelection) {
+              addHighlight.mutate({ ...pendingSelection, color });
+            }
+          }}
+          onDelete={editingHighlightId ? () => deleteHighlight.mutate(editingHighlightId) : undefined}
+          onClose={() => { setPopup(null); setPendingSelection(null); setEditingHighlightId(null); }}
+        />
+      )}
     </div>
   );
 }
