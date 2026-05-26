@@ -166,21 +166,7 @@ export default function ArticlePage() {
         </button>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <select
-            value={speechRate}
-            onChange={(e) => {
-              setSpeechRate(Number(e.target.value));
-              if (isSpeaking) { stopSpeech(); setTimeout(startSpeech, 100); }
-            }}
-            style={{ background: 'var(--bg-3)', border: '1px solid var(--border)', color: 'var(--text-3)', borderRadius: 'var(--radius-sm)', padding: '0.25rem 0.4rem', fontSize: '0.75rem', cursor: 'pointer' }}
-          >
-            <option value={0.75}>0.75×</option>
-            <option value={1}>1×</option>
-            <option value={1.25}>1.25×</option>
-            <option value={1.5}>1.5×</option>
-            <option value={2}>2×</option>
-          </select>
-
+          {/* Font size */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <button
               onClick={() => setFontSize(f => Math.max(14, f - 2))}
@@ -196,13 +182,31 @@ export default function ArticlePage() {
             </button>
           </div>
 
-          <button
-            onClick={toggleSpeech}
-            style={{ padding: '0.3rem 0.75rem', background: isSpeaking ? 'var(--accent-dim)' : 'var(--bg-3)', border: `1px solid ${isSpeaking ? 'rgba(212,168,83,0.3)' : 'var(--border)'}`, borderRadius: 'var(--radius-sm)', color: isSpeaking ? 'var(--accent)' : 'var(--text-3)', fontSize: '0.775rem', cursor: 'pointer', transition: 'all 0.15s' }}
-          >
-            {isSpeaking ? '⏹ Stop' : '▶ Listen'}
-          </button>
+          {/* Speed + Listen grouped */}
+          <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
+            <select
+              value={speechRate}
+              onChange={(e) => {
+                setSpeechRate(Number(e.target.value));
+                if (isSpeaking) { stopSpeech(); setTimeout(startSpeech, 100); }
+              }}
+              style={{ background: 'var(--bg-3)', border: 'none', borderRight: '1px solid var(--border)', color: 'var(--text-3)', padding: '0.3rem 0.4rem', fontSize: '0.75rem', cursor: 'pointer' }}
+            >
+              <option value={0.75}>0.75×</option>
+              <option value={1}>1×</option>
+              <option value={1.25}>1.25×</option>
+              <option value={1.5}>1.5×</option>
+              <option value={2}>2×</option>
+            </select>
+            <button
+              onClick={toggleSpeech}
+              style={{ padding: '0.3rem 0.75rem', background: isSpeaking ? 'var(--accent-dim)' : 'var(--bg-3)', border: 'none', color: isSpeaking ? 'var(--accent)' : 'var(--text-3)', fontSize: '0.775rem', cursor: 'pointer', transition: 'all 0.15s' }}
+            >
+              {isSpeaking ? '⏹ Stop' : '▶ Listen'}
+            </button>
+          </div>
 
+          {/* Save */}
           <button
             onClick={() => bookmark.mutate()}
             style={{ padding: '0.3rem 0.75rem', background: data.isBookmarked ? 'var(--accent-dim)' : 'var(--bg-3)', border: `1px solid ${data.isBookmarked ? 'rgba(212,168,83,0.3)' : 'var(--border)'}`, borderRadius: 'var(--radius-sm)', color: data.isBookmarked ? 'var(--accent)' : 'var(--text-3)', fontSize: '0.775rem', cursor: 'pointer', transition: 'all 0.15s' }}
@@ -210,6 +214,7 @@ export default function ArticlePage() {
             {data.isBookmarked ? '★ Saved' : '☆ Save'}
           </button>
 
+          {/* Source */}
           <a
             href={data.url}
             target="_blank"
