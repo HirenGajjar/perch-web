@@ -7,6 +7,7 @@ import feedRoutes from './routes/feed.routes.ts';
 import articleRoutes from './routes/article.routes.ts';
 import bookmarkRoutes from './routes/bookmark.routes.ts';
 import highlightRoutes from './routes/highlight.routes.ts';
+import searchRoutes from './routes/search.routes.ts';
 import { generalLimiter, authLimiter, feedLimiter } from './middleware/rateLimit.middleware.ts';
 
 dotenv.config();
@@ -42,6 +43,7 @@ app.use('/feeds', feedLimiter, feedRoutes);
 app.use('/articles', articleRoutes);
 app.use('/bookmarks', bookmarkRoutes);
 app.use('/highlights', highlightRoutes);
+app.use('/search', searchRoutes);
 
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
