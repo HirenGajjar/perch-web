@@ -184,7 +184,9 @@ export async function addFeed(url: string, userId: string) {
         const plainText = stripHtml(rawContent);
 
         let finalContent = rawContent;
+        console.log(`[feed] ${item.link} | raw: ${plainText.length} chars`);
         if (plainText.length < 500 && item.link) {
+          console.log(`[feed] final: ${stripHtml(finalContent).length} chars`);
           const full = await fetchFullContent(item.link);
           if (full && stripHtml(full).length > plainText.length) {
             finalContent = full;

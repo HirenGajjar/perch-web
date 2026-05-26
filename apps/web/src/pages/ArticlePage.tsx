@@ -135,7 +135,10 @@ export default function ArticlePage() {
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+  navigate('/');
+  return null;
+}
 
   const feedName = (data.feed?.title ?? '').replace(/\s*blog\s*/gi, '').trim() || data.feed?.title;
 
