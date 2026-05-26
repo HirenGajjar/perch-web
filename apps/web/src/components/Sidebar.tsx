@@ -17,9 +17,10 @@ export function Sidebar({ user, feeds, activeFeedId, onFeedSelect, onAddFeed, on
   const location = useLocation();
 
   const navItems = [
-    { label: 'Home', icon: '⌂', path: '/' },
-    { label: 'Library', icon: '◈', path: '/library' },
-  ];
+  { label: 'Home', icon: '⌂', path: '/' },
+  { label: 'Library', icon: '◈', path: '/library' },
+  { label: 'Search', icon: '⌕', path: '/search' },
+];
 
   return (
     <aside style={{ width: '220px', minWidth: '220px', height: '100vh', background: 'var(--bg-2)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column' }}>

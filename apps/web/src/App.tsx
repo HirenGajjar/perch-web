@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage.tsx';
 import RegisterPage from './pages/RegisterPage.tsx';
 import FeedPage from './pages/FeedPage.tsx';
 import ArticlePage from './pages/ArticlePage.tsx';
+import SearchPage from './pages/SearchPage.tsx';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token);
@@ -39,6 +40,14 @@ export default function App() {
           </PrivateRoute>
         }
       />
+      <Route
+  path="/search"
+  element={
+    <PrivateRoute>
+      <SearchPage />
+    </PrivateRoute>
+  }
+/>
     </Routes>
   );
 }
