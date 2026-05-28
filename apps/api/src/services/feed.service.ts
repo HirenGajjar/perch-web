@@ -173,8 +173,10 @@ export async function addFeed(url: string, userId: string) {
     data: { userId, feedId: dbFeed.id },
   });
 
-  if (!existing) {
-    const articles = (feed.items ?? []).slice(0, 20);
+const articleCount = await prisma.article.count({ where: { feedId: dbFeed.id } });
+
+if (!existing || articleCount === 0) {
+  const articles = (feed.items ?? []).slice(0, 20);
 
     for (const item of articles) {
       try {
