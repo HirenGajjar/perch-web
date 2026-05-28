@@ -13,7 +13,7 @@ export default function SearchPage() {
   const [submitted, setSubmitted] = useState('');
   const [mode, setMode] = useState<'my-feeds' | 'discover'>('my-feeds');
   const [speakingId, setSpeakingId] = useState<string | null>(null);
-  const [addingFeedId, setAddingFeedId] = useState<string | null>(null);
+  const [feedStatus, setFeedStatus] = useState<Record<string, 'adding' | 'following' | 'error'>>({});
 
   usePageTitle('Search');
 
@@ -32,14 +32,20 @@ export default function SearchPage() {
   });
 
   const addFeed = useMutation({
-    mutationFn: (url: string) => api.post('/feeds', { url }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['feeds'] });
-      queryClient.invalidateQueries({ queryKey: ['articles'] });
-      setAddingFeedId(null);
-    },
-    onError: () => setAddingFeedId(null),
-  });
+  mutationFn: ({ url, feedId }: { url: string; feedId: string }) =>
+    api.post('/feeds', { url }).then((r) => ({ ...r, feedId })),
+  onSuccess: (_, variables) => {
+    queryClient.invalidateQueries({ queryKey: ['feeds'] });
+    queryClient.invalidateQueries({ queryKey: ['articles'] });
+    setFeedStatus((prev) => ({ ...prev, [variables.feedId]: 'following' }));
+  },
+  onError: (_, variables) => {
+    setFeedStatus((prev) => ({ ...prev, [variables.feedId]: 'error' }));
+    setTimeout(() => {
+      setFeedStatus((prev) => { const n = { ...prev }; delete n[variables.feedId]; return n; });
+    }, 3000);
+  },
+});
 
   const bookmark = useMutation({
     mutationFn: ({ id, isBookmarked }: { id: string; isBookmarked: boolean }) =>
@@ -255,26 +261,50 @@ export default function SearchPage() {
                     </div>
 
                     <button
-                      onClick={() => {
-                        setAddingFeedId(feed.feedId);
-                        addFeed.mutate(feed.feedId.replace('feed/', ''));
-                      }}
-                      disabled={addingFeedId === feed.feedId}
-                      style={{
-                        padding: '0.4rem 0.9rem',
-                        background: addingFeedId === feed.feedId ? 'var(--bg-3)' : 'var(--accent)',
-                        color: addingFeedId === feed.feedId ? 'var(--text-3)' : '#0c0c0e',
-                        border: 'none',
-                        borderRadius: 'var(--radius-sm)',
-                        fontSize: '0.775rem',
-                        fontWeight: 600,
-                        cursor: addingFeedId === feed.feedId ? 'not-allowed' : 'pointer',
-                        flexShrink: 0,
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      {addingFeedId === feed.feedId ? 'Adding...' : '+ Follow'}
-                    </button>
+  onClick={() => {
+    if (feedStatus[feed.feedId] === 'following') return;
+    setFeedStatus((prev) => ({ ...prev, [feed.feedId]: 'adding' }));
+    addFeed.mutate({ url: feed.feedId.replace('feed/', ''), feedId: feed.feedId });
+  }}
+  disabled={feedStatus[feed.feedId] === 'adding' || feedStatus[feed.feedId] === 'following'}
+  style={{
+    padding: '0.4rem 0.9rem',
+    background: feedStatus[feed.feedId] === 'following'
+      ? 'var(--accent-dim)'
+      : feedStatus[feed.feedId] === 'error'
+        ? 'rgba(224,85,85,0.15)'
+        : feedStatus[feed.feedId] === 'adding'
+          ? 'var(--bg-3)'
+          : 'var(--accent)',
+    color: feedStatus[feed.feedId] === 'following'
+      ? 'var(--accent)'
+      : feedStatus[feed.feedId] === 'error'
+        ? '#ff6384'
+        : feedStatus[feed.feedId] === 'adding'
+          ? 'var(--text-3)'
+          : '#0c0c0e',
+    border: feedStatus[feed.feedId] === 'following'
+      ? '1px solid rgba(212,168,83,0.3)'
+      : feedStatus[feed.feedId] === 'error'
+        ? '1px solid rgba(224,85,85,0.3)'
+        : 'none',
+    borderRadius: 'var(--radius-sm)',
+    fontSize: '0.775rem',
+    fontWeight: 600,
+    cursor: feedStatus[feed.feedId] === 'following' ? 'default' : 'pointer',
+    flexShrink: 0,
+    transition: 'all 0.15s',
+    minWidth: '80px',
+  }}
+>
+  {feedStatus[feed.feedId] === 'adding'
+    ? 'Adding...'
+    : feedStatus[feed.feedId] === 'following'
+      ? '✓ Following'
+      : feedStatus[feed.feedId] === 'error'
+        ? 'Failed'
+        : '+ Follow'}
+</button>
                   </div>
                 ))}
               </>
