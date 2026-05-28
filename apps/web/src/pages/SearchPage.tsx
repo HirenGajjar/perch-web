@@ -264,7 +264,8 @@ export default function SearchPage() {
   onClick={() => {
     if (feedStatus[feed.feedId] === 'following') return;
     setFeedStatus((prev) => ({ ...prev, [feed.feedId]: 'adding' }));
-    addFeed.mutate({ url: feed.feedId.replace('feed/', ''), feedId: feed.feedId });
+    const feedUrl = feed.feedId.replace('feed/', '').replace(/^http:\/\//, 'https://');
+addFeed.mutate({ url: feedUrl, feedId: feed.feedId });
   }}
   disabled={feedStatus[feed.feedId] === 'adding' || feedStatus[feed.feedId] === 'following'}
   style={{
